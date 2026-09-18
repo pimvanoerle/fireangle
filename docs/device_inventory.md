@@ -5,18 +5,25 @@ alarm, watch the decoded `TEST` event, record the `device` field.
 
 IDs are lower-case hex, no separators (e.g. `2d8d01`).
 
-## Alarms — 7 smoke + 1 heat
+## During installation — read this first
 
-| # | Room | Type | Model | Device ID | Model ID |
-|---|------|------|-------|-----------|----------|
-| 1 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 2 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 3 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 4 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 5 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 6 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 7 | _TBC_ | Smoke | FP1640W2-R | `______` | `____` |
-| 8 | Kitchen | **Heat** | FP1740W2-R | `______` | `____` |
+The mesh device IDs below get captured **later**, once the bridge is live (bring-up step 9:
+press test on one alarm at a time and read the decoded `device` field). Nothing about the
+install needs to wait for that.
+
+But one thing is worth doing now, because the chance does not come back:
+
+> **Photograph each alarm's rear label, with its room, before it goes on the ceiling.**
+
+Once mounted, that label faces the ceiling and is unreadable without taking the unit down
+again. If the printed serial turns out to correlate with the 3-byte mesh device ID, the
+room→ID map falls out for free. If it does not correlate, we have lost nothing but a few
+seconds per alarm. Drop the photos in `hardware/` as `alarm-<room>.jpg`.
+
+Also worth recording as you go: the install date per unit. These have a 10-year life and
+the replace-by date is otherwise buried on a hidden label.
+
+## Alarms — 7 smoke + 1 heat
 
 Huis is an upside-down house — living room, kitchen and dining are **upstairs**; bedrooms,
 study and the main hallway are **downstairs**. Name rooms by what they are, not by floor.
