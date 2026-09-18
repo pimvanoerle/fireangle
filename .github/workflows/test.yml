@@ -16,7 +16,7 @@ jobs:
       - run: pip install pytest
       - run: python -m pytest tests/ -q
 
-  esphome-config:
+  firmware:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,43 +24,36 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install esphome
+
+      - name: Cache ESP-IDF toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: platformio-${{ hashFiles('firmware/esphome/wisafe2-bridge.yaml') }}
+
       - name: Generate test secrets
         working-directory: firmware/esphome
         run: |
-          python - <<'PY'
+          python -c "
           import base64, os, pathlib
-          pathlib.Path("secrets.yaml").write_text(
-              'wifi_ssid: "ci"\n'
-              'wifi_password: "cipassword"\n'
-              'fallback_password: "cifallback"\n'
-              f'api_encryption_key: "{base64.b64encode(os.urandom(32)).decode()}"\n'
-              'ota_password: "ciota"\n'
+          pathlib.Path('secrets.yaml').write_text(
+              'wifi_ssid: \"ci\"\n'
+              'wifi_password: \"cipassword\"\n'
+              'fallback_password: \"cifallback\"\n'
+              'api_encryption_key: \"%s\"\n' % base64.b64encode(os.urandom(32)).decode() +
+              'ota_password: \"ciotapassword\"\n'
           )
-          PY
-      - name: Validate config
+          "
+
+      - name: Validate shipped config
         working-directory: firmware/esphome
         run: esphome config wisafe2-bridge.yaml
 
+      # Schema validation never runs codegen or the compiler, so build a variant with
+      # alarms populated. This is what catches C++ errors in the component.
       - name: Compile with alarms configured
         working-directory: firmware/esphome
         run: |
-          # `esphome config` only checks the schema -- it never runs codegen or the
-          # compiler. Build a variant with alarms populated so the component's to_code
-          # path and the C++ actually get exercised.
-          python - <<'PY'
-          import pathlib
-          s = pathlib.Path("wisafe2-bridge.yaml").read_text()
-          start = s.index("  alarms:")
-          end = s.index("# --- Bridge health")
-          s = s[:start] + '''  alarms:
-    - name: "CI Smoke"
-      device: "2d8d01"
-      kind: smoke
-    - name: "CI Heat"
-      device: "a76f18"
-      kind: heat
-
-''' + s[end:]
-          pathlib.Path("ci-build.yaml").write_text(s)
-          PY
+          python ../../tools/make_test_config.py wisafe2-bridge.yaml ci-build.yaml
           esphome compile ci-build.yaml
+
