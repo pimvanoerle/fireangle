@@ -25,7 +25,7 @@ study and the main hallway are **downstairs**. Name rooms by what they are, not 
 
 | Field | Value |
 |-------|-------|
-| Donor device | _TBC — the buzzer_ |
+| Donor device | CP-LED (red PCB, device-powered) |
 | Donor model ID | _TBC_ |
 | Bridge device ID | `a5b813` (default; change if it collides) |
 | Impersonated model ID | `1103` (WST-630) — see protocol §5 |

@@ -4,7 +4,7 @@
 
 | Item | Qty | Notes |
 |------|-----|-------|
-| Donor WiSafe2 radio module | 1 | Harvested from the buzzer — model TBC |
+| Donor WiSafe2 radio module | 1 | Red PCB, harvested from a CP-LED unit — device-powered, no battery |
 | ESP32 dev board | 1 | Must be classic ESP32 or ESP32-S3, **not** ESP8266 (no SPI slave) |
 | Wire for antenna | 1 | 17.27 cm half-wave, or 8.64 cm quarter-wave |
 | Enclosure | 1 | Reference STL exists; ours will differ (no Nano, no shifters) |
@@ -13,14 +13,30 @@
 ATmega328P runs at 5 V and the radio at 3.3 V. The ESP32 is natively 3.3 V, so the radio wires
 straight to it. This is the first concrete win from the ESP32 choice.
 
-## Donor module variants
+## Our donor: a CP-LED, red PCB
 
-Two PCB colours are documented:
-- **red** — device-powered, no battery
-- **black** — battery-powered; the battery can be removed and the module run from the ESP32's
-  3.3 V rail instead, which avoids a battery that will eventually die inside our bridge
+The donor is a device marked **CP-LED**, opened 2026-09-18. It contains a **small red
+radio daughterboard**.
 
-Identify which we have before wiring.
+**Red is the variant we want.** Per the reference project, modules inside *alarms* are
+battery-backed and have black PCBs; modules in *device-powered* units (strobes, sounders,
+notification units) run off the host and have red PCBs. So ours:
+
+- has no battery to go flat inside our bridge, and none to remove
+- does **not** need the 3.3 V-to-battery-terminal bridge wire a black module would
+- powers directly from the ESP32's 3.3 V rail
+
+`CP-LED` does not appear anywhere in FireAngel's published model list, so it is probably a
+board silkscreen or an OEM/installer part code rather than a retail model name. That does
+not block us — identification from the board itself is more reliable anyway. **UNVERIFIED**
+which product line it came from.
+
+### Still to identify from the board
+
+- The radio module's own part number and chip markings
+- Pin labels: `_SS` `SCK` `SDI` `SDO` `IRQ` `VCC` `GND` `ANT` (usually silkscreened)
+- Whether the module is socketed/pluggable or soldered to the host board
+- The model ID this donor announces to the mesh (captured later, at bring-up)
 
 ## Wiring (proposed)
 
@@ -84,8 +100,9 @@ design a PCB before then.
 
 ## Bring-up order
 
-1. Identify the donor buzzer model; open it; photograph the PCB and the radio daughterboard.
-2. Identify module variant (red/black) and locate `_SS` `SCK` `SDI` `SDO` `IRQ` `VCC` `GND`.
+1. ~~Identify the donor device; open it.~~ **Done** — CP-LED, red PCB.
+2. ~~Identify module variant (red/black).~~ **Done — red, device-powered.** Still to do:
+   locate and label `_SS` `SCK` `SDI` `SDO` `IRQ` `VCC` `GND` `ANT` on the module.
 3. **Measure SCK frequency** with a logic analyser — this settles route A vs C.
 4. Wire radio → ESP32 on a breadboard. Attach antenna.
 5. Flash firmware in **raw hex passthrough mode** and confirm `init` returns `46 7E`.
