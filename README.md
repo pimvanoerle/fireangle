@@ -51,7 +51,7 @@ implemented — that waits on measuring the radio's clock. See `docs/hardware.md
 | Protocol spec | Documented from captures |
 | Frame decoder (Python) | Written, 23 tests passing |
 | Frame decoder (C++) | Written, mirrors the Python |
-| ESPHome component + codegen | Written, unvalidated |
+| ESPHome component + codegen | Written, compiles clean for esp32/esp-idf |
 | SPI slave shifter | **Not implemented** — blocked on measuring SCK |
 | Pairing handshake | Not implemented |
 | Hardware | Not built |

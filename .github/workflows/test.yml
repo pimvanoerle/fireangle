@@ -40,3 +40,27 @@ jobs:
       - name: Validate config
         working-directory: firmware/esphome
         run: esphome config wisafe2-bridge.yaml
+
+      - name: Compile with alarms configured
+        working-directory: firmware/esphome
+        run: |
+          # `esphome config` only checks the schema -- it never runs codegen or the
+          # compiler. Build a variant with alarms populated so the component's to_code
+          # path and the C++ actually get exercised.
+          python - <<'PY'
+          import pathlib
+          s = pathlib.Path("wisafe2-bridge.yaml").read_text()
+          start = s.index("  alarms:")
+          end = s.index("# --- Bridge health")
+          s = s[:start] + '''  alarms:
+    - name: "CI Smoke"
+      device: "2d8d01"
+      kind: smoke
+    - name: "CI Heat"
+      device: "a76f18"
+      kind: heat
+
+''' + s[end:]
+          pathlib.Path("ci-build.yaml").write_text(s)
+          PY
+          esphome compile ci-build.yaml

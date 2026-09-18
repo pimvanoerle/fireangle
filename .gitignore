@@ -13,3 +13,4 @@ venv/
 # macOS
 .DS_Store
 _test.yaml
+ci-build.yaml

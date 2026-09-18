@@ -1,6 +1,8 @@
 #include "wisafe2.h"
 #include "esphome/core/log.h"
 
+#include <inttypes.h>
+
 namespace esphome {
 namespace wisafe2 {
 
@@ -82,7 +84,7 @@ bool FrameReader::feed(uint8_t byte) {
     this->buf_.clear();
     this->resyncing_ = true;
     this->desyncs_++;
-    ESP_LOGW(TAG, "lost frame sync (%u total), resynchronising", this->desyncs_);
+    ESP_LOGW(TAG, "lost frame sync (%" PRIu32 " total), resynchronising", this->desyncs_);
   }
   return false;
 }
@@ -190,7 +192,7 @@ void Wisafe2Component::setup() {
     this->radio_ready_ = this->init_radio_();
     if (!this->radio_ready_) {
       ESP_LOGE(TAG, "radio did not respond to init");
-      this->status_set_error("radio init failed");
+      this->status_set_error(LOG_STR("radio init failed"));
     } else {
       ESP_LOGI(TAG, "radio init OK");
       this->status_clear_error();
@@ -228,7 +230,7 @@ void Wisafe2Component::handle_frame_() {
 
   Event event{};
   if (!decode_frame(frame, &event)) {
-    ESP_LOGW(TAG, "undecodable frame, length %u, type 0x%02X", frame.size(),
+    ESP_LOGW(TAG, "undecodable frame, length %zu, type 0x%02X", frame.size(),
              frame.empty() ? 0 : frame[0]);
     return;
   }
