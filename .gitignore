@@ -1,0 +1,15 @@
+# ESPHome
+firmware/esphome/.esphome/
+firmware/esphome/secrets.yaml
+*.bin
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+_test.yaml

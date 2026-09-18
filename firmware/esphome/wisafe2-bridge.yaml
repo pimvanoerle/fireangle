@@ -1,0 +1,122 @@
+# FireAngel WiSafe2 → Home Assistant bridge
+#
+# Fill in the `device:` IDs from docs/device_inventory.md once they have been captured
+# during bring-up. Alarms with a placeholder ID are commented out so they do not create
+# entities that can never report.
+
+substitutions:
+  name: wisafe2-bridge
+  friendly_name: FireAngel Bridge
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  # The external component uses the ESP-IDF GPIO/timing APIs for the SPI slave shifter.
+  platformio_options:
+    build_flags:
+      - -DWISAFE2_BRIDGE
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+logger:
+  level: INFO
+  # The radio chatters; keep the component at INFO and lift it to DEBUG during bring-up.
+  logs:
+    wisafe2: INFO
+    wisafe2.alarm: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # A fire alarm bridge that silently drops off WiFi is worse than useless, so make the
+  # failure visible rather than letting it sit there looking fine.
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret fallback_password
+
+captive_portal:
+
+wisafe2:
+  id: bridge
+  ss_pin: GPIO5
+  sck_pin: GPIO18
+  sdi_pin: GPIO23
+  sdo_pin: GPIO19
+  irq_pin: GPIO21
+
+  # Our identity on the mesh. Any unique device ID; model 1103 impersonates a WST-630
+  # smoke alarm, which is the safest thing for the mesh to think we are.
+  device_id: "a5b813"
+  model_id: "1103"
+
+  # Set true to log raw hex frames instead of decoding them. Use during bring-up to
+  # capture unknown frames, then feed them through tools/wisafe2.py.
+  raw_mode: false
+
+  alarms:
+    # - name: "Landing Smoke"
+    #   device: "______"
+    #   kind: smoke
+    # - name: "Upstairs Hallway Smoke"
+    #   device: "______"
+    #   kind: smoke
+    # ... 7 smoke total ...
+    # - name: "Kitchen Heat"
+    #   device: "______"
+    #   kind: heat
+
+# --- Bridge health -----------------------------------------------------------
+# The mesh's own missing-device reporting is peer-to-peer, so if the whole mesh goes
+# quiet nobody is left to report it. These entities detect that from our side.
+
+binary_sensor:
+  - platform: status
+    name: "Bridge Connected"
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: version
+    name: "Bridge Firmware"
+    entity_category: diagnostic
+
+button:
+  - platform: template
+    name: "Test Smoke Network"
+    icon: mdi:smoke-detector-variant-alert
+    entity_category: config
+    on_press:
+      - lambda: 'id(bridge).send_test(0x81);'
+
+  - platform: template
+    name: "Silence Alarms"
+    icon: mdi:volume-off
+    entity_category: config
+    on_press:
+      - lambda: 'id(bridge).send_silence(0x80);'
+
+  - platform: template
+    name: "Check Pairing"
+    icon: mdi:link-variant
+    entity_category: diagnostic
+    on_press:
+      - lambda: 'id(bridge).check_pairing();'
+
+# Deliberately NOT exposed: the emergency broadcast commands (protocol 0x50 with trigger
+# 0x41/0x81). Those make every alarm in the house scream. They exist in the protocol doc
+# for completeness and belong on a bench, not on a dashboard.

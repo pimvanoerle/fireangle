@@ -1,0 +1,112 @@
+# FireAngel WiSafe2 bridge — Home Assistant package
+#
+# Drop into config/packages/ and reference from configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# The ESPHome component creates all per-alarm entities via the native API, so there are
+# no template sensors here — only the automations that act on them.
+
+alert: {}
+
+automation:
+  # --- The one that matters ---------------------------------------------------
+  - id: fireangel_emergency
+    alias: FireAngel Emergency
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id:
+          # Every *_emergency binary_sensor the bridge creates. Listing them explicitly
+          # rather than using a template trigger keeps this evaluable at startup.
+          - binary_sensor.wisafe2_bridge_landing_smoke_emergency
+          # ... add one line per alarm as device IDs are filled in ...
+        to: "on"
+    actions:
+      - action: notify.notify
+        data:
+          title: "🔥 FireAngel Emergency"
+          message: >-
+            {{ state_attr(trigger.entity_id, 'friendly_name') | replace(' Emergency', '') }}
+            is in alarm. Take action now.
+          data:
+            # iOS critical alert — bypasses silent mode and Do Not Disturb.
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+            # Android equivalent.
+            ttl: 0
+            priority: high
+            channel: alarm_stream
+
+      - action: tts.speak
+        target:
+          entity_id: tts.piper
+        data:
+          media_player_entity_id: media_player.broadcast_group
+          message: >-
+            {% set entity = trigger.entity_id %}
+            {% set room = state_attr(entity, 'friendly_name') | replace(' Emergency', '') %}
+            {% set event = states(entity | replace('_emergency', '_event')) %}
+            Warning.
+            {% if 'HEAT' in event %}Heat{% elif 'CARBON' in event %}Carbon monoxide{% else %}Smoke{% endif %}
+            detected. {{ room }}. This is not a test.
+
+  # --- Diagnostics ------------------------------------------------------------
+  - id: fireangel_test_failed
+    alias: FireAngel Test Failed
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id:
+          - text_sensor.wisafe2_bridge_landing_smoke_event
+    conditions:
+      - condition: template
+        value_template: "{{ 'TEST FAIL' in trigger.to_state.state }}"
+    actions:
+      - action: notify.notify
+        data:
+          title: "FireAngel test failed"
+          message: >-
+            {{ state_attr(trigger.entity_id, 'friendly_name') | replace(' Event', '') }}
+            failed its self-test — likely a flat battery.
+
+  - id: fireangel_off_base
+    alias: FireAngel Alarm Off Base
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id:
+          - binary_sensor.wisafe2_bridge_landing_smoke_base
+        to: "off"
+        for: "00:05:00"
+    actions:
+      - action: notify.notify
+        data:
+          title: "FireAngel alarm off its base"
+          message: >-
+            {{ state_attr(trigger.entity_id, 'friendly_name') | replace(' On Base', '') }}
+            has been off its mounting base for 5 minutes.
+
+  # --- The bridge watching itself --------------------------------------------
+  # The mesh reports missing devices peer-to-peer, so a total mesh failure reports
+  # nothing at all. This catches the bridge itself going quiet. It does NOT make the
+  # alarms less safe — they are certified standalone — it just tells us the overlay
+  # has stopped being truthful.
+  - id: fireangel_bridge_offline
+    alias: FireAngel Bridge Offline
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.wisafe2_bridge_bridge_connected
+        to: "off"
+        for: "00:10:00"
+    actions:
+      - action: notify.notify
+        data:
+          title: "FireAngel bridge offline"
+          message: >-
+            The WiSafe2 bridge has been unreachable for 10 minutes. The alarms themselves
+            are unaffected — but Home Assistant is no longer seeing them.

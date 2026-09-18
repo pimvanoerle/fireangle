@@ -1,0 +1,42 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  decoder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - run: python -m pytest tests/ -q
+
+  esphome-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install esphome
+      - name: Generate test secrets
+        working-directory: firmware/esphome
+        run: |
+          python - <<'PY'
+          import base64, os, pathlib
+          pathlib.Path("secrets.yaml").write_text(
+              'wifi_ssid: "ci"\n'
+              'wifi_password: "cipassword"\n'
+              'fallback_password: "cifallback"\n'
+              f'api_encryption_key: "{base64.b64encode(os.urandom(32)).decode()}"\n'
+              'ota_password: "ciota"\n'
+          )
+          PY
+      - name: Validate config
+        working-directory: firmware/esphome
+        run: esphome config wisafe2-bridge.yaml
