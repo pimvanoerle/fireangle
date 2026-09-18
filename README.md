@@ -53,6 +53,7 @@ implemented — that waits on measuring the radio's clock. See `docs/hardware.md
 | Frame decoder (C++) | Written, mirrors the Python |
 | ESPHome component + codegen | Written, compiles clean for esp32/esp-idf |
 | SPI slave shifter | **Not implemented** — blocked on measuring SCK |
+| Donor hardware | Identified: FireAngel CP-LED (`W2-SVP-630L`), Si4431 + PIC16LF1936 |
 | Pairing handshake | Not implemented |
 | Hardware | Not built |
 

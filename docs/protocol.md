@@ -249,7 +249,7 @@ Tx: D3 03 7E          -> re-check, expect state non-zero
 | `1103` | WST-630 | Smoke |
 | `1104` | FP1720W2-R | **Heat**, battery |
 | `7803` | W2-CO-10X | CO |
-| `c304` | W2-SVP-630 | Strobe & vibrating pad |
+| `c304` | W2-SVP-630 | Strobe & vibrating pad — **our donor is a `W2-SVP-630L`** |
 | `????` | **FP1640W2-R** | **Smoke, mains — ours, UNKNOWN** |
 | `????` | **FP1740W2-R** | **Heat, mains — ours, UNKNOWN** |
 
@@ -267,5 +267,7 @@ The bridge must present a device ID and a model ID to the mesh.
   `1103` (WST-630) is the reference default and is the safest choice: it is a smoke alarm, so
   the mesh treats us as an ordinary smoke node.
 
-> Impersonating `c304` (strobe) may cause other nodes to expect strobe-specific behaviour.
-> Stick with `1103` unless there is a reason not to. **UNVERIFIED** either way.
+> Our donor module physically came from a `W2-SVP-630L` strobe, whose own model ID is
+> `c304`. We still announce `1103`: impersonating a strobe may make other nodes expect
+> strobe-specific behaviour, and strobe-donor plus `1103` is exactly the combination the
+> reference project ran, so it is the proven pairing. **UNVERIFIED** either way.

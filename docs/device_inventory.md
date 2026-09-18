@@ -25,8 +25,8 @@ study and the main hallway are **downstairs**. Name rooms by what they are, not 
 
 | Field | Value |
 |-------|-------|
-| Donor device | CP-LED (red PCB, device-powered) |
-| Donor model ID | _TBC_ |
+| Donor device | FireAngel CP-LED = `W2-SVP-630L` (red PCB, Si4431 + PIC16LF1936) |
+| Donor model ID | `c304` (expected — confirm from capture) |
 | Bridge device ID | `a5b813` (default; change if it collides) |
 | Impersonated model ID | `1103` (WST-630) — see protocol §5 |
 
